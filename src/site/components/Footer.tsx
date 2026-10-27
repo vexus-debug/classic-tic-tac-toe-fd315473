@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Globe, ShieldCheck } from "lucide-react";
 import clinexusLogoWhite from "@/assets/site/clinexus-logo-white.png";
 
 const columns = [
@@ -8,6 +7,7 @@ const columns = [
     { label: "Eye clinics", to: "/industries/eye-clinics" },
     { label: "Dental clinics", to: "/industries/dental-clinics" },
     { label: "Dental clinic pricing", to: "/industries/dental-clinics/pricing" },
+    { label: "How a case works", to: "/industries/dental-clinics/how-cases-work" },
   ]},
   { title: "Resources", links: [
     { label: "Tutorials", to: "/tutorials" },
@@ -27,74 +27,83 @@ const columns = [
   ]},
 ];
 
+const linkCls = "text-sm text-muted-foreground transition-colors hover:text-primary";
+
 const Footer = () => {
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
   return (
-    <footer className="site-footer border-t border-border bg-card text-foreground">
-      <div className="container">
-        <div className="flex flex-col gap-6 border-b border-border py-12 md:flex-row md:items-center md:justify-between">
-          <div className="max-w-md">
-            <h3 className="text-xl font-semibold">Clinic insights, straight to your inbox</h3>
-            <p className="mt-2 text-sm text-foreground/60">Practical tips on growing your practice and product news. No spam.</p>
+    <footer className="site-footer site-ink relative overflow-hidden">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 left-1/2 h-80 w-[60rem] -translate-x-1/2 rounded-full opacity-60 blur-3xl"
+        style={{ background: "radial-gradient(closest-side, hsl(var(--ink-glow)), transparent)" }}
+      />
+      <div className="container relative">
+        <div className="grid gap-6 border-b border-border py-12 md:grid-cols-2 md:items-end">
+          <div>
+            <p className="font-mono text-xs text-primary">Clinical dispatch</p>
+            <h3 className="mt-2 text-2xl text-foreground">Product updates and practical clinic notes.</h3>
+            <p className="mt-2 text-sm text-muted-foreground">About one email a month. Unsubscribe any time.</p>
           </div>
           {done ? (
-            <p className="text-sm font-medium text-primary">Thanks — you're on the list.</p>
+            <p className="text-sm font-medium text-primary md:justify-self-end">Thanks, you're on the list.</p>
           ) : (
             <form
               onSubmit={(e) => { e.preventDefault(); if (email) setDone(true); }}
-              className="flex w-full max-w-md gap-2"
+              className="flex w-full border-b border-border focus-within:border-primary md:max-w-md md:justify-self-end"
             >
+              <label htmlFor="footer-email" className="sr-only">Email address</label>
               <input
-                type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email address"
-                className="h-11 flex-1 rounded-md border border-border bg-background px-4 text-sm outline-none focus:border-primary"
+                id="footer-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@clinic.com.ng"
+                className="h-12 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
               />
-              <button type="submit" className="inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90">
-                Subscribe <ArrowRight className="h-4 w-4" />
+              <button type="submit" className="h-12 px-2 text-sm font-semibold text-primary hover:opacity-80">
+                Subscribe →
               </button>
             </form>
           )}
         </div>
 
         <div className="grid gap-10 py-14 lg:grid-cols-6">
-          <div className="space-y-4 lg:col-span-2">
+          <div className="space-y-5 lg:col-span-2">
             <img src={clinexusLogoWhite} alt="Clinexus" className="h-9" />
-            <p className="max-w-xs text-sm text-foreground/60">
-              Run a calmer, more profitable clinic, less admin, fewer no-shows, more time for patients.
+            <p className="max-w-xs text-sm text-muted-foreground">
+              Clinic software for Nigerian dental and eye practices.
             </p>
-            <div className="space-y-1 text-sm text-foreground/60">
-              <a href="mailto:support@clinexus.com.ng" className="block hover:text-foreground">support@clinexus.com.ng</a>
-              <a href="https://wa.me/2349017758165" target="_blank" rel="noopener noreferrer" className="block hover:text-foreground">0901 7758 165</a>
-              <span className="block">Ikeja, Lagos, Nigeria</span>
+            <div className="space-y-1.5 text-sm">
+              <a href="mailto:support@clinexus.com.ng" className={`block ${linkCls}`}>support@clinexus.com.ng</a>
+              <a href="https://wa.me/2349017758165" target="_blank" rel="noopener noreferrer" className={`block ${linkCls}`}>0901 7758 165</a>
+              <span className="block text-sm text-muted-foreground">Ikeja, Lagos</span>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:col-span-4 lg:grid-cols-4">
-          {columns.map((col) => (
-            <div key={col.title} className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground">{col.title}</h4>
-              <ul className="space-y-2.5">
-                {col.links.map((l) => (
-                  <li key={l.to}>
-                    {l.to === "/login" ? (
-                      <a href={l.to} className="text-sm text-foreground/60 transition-colors hover:text-foreground">{l.label}</a>
-                    ) : (
-                      <Link to={l.to} className="text-sm text-foreground/60 transition-colors hover:text-foreground">{l.label}</Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-4">
+            {columns.map((col) => (
+              <div key={col.title}>
+                <h4 className="mb-4 border-b border-border pb-2 font-mono text-xs text-foreground">{col.title}</h4>
+                <ul className="space-y-2.5">
+                  {col.links.map((l) => (
+                    <li key={l.to}>
+                      {l.to === "/login" ? (
+                        <a href={l.to} className={linkCls}>{l.label}</a>
+                      ) : (
+                        <Link to={l.to} className={linkCls}>{l.label}</Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-border py-6 text-xs text-foreground/50 md:flex-row md:items-center md:justify-between">
-          <span>© {new Date().getFullYear()} Clinexus. All rights reserved.</span>
-          <div className="flex items-center gap-5">
-            <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /> Nigeria (English)</span>
-            <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" /> Secure cloud hosting</span>
-          </div>
+        <div className="flex flex-col gap-3 border-t border-border py-6 font-mono text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
+          <span>© {new Date().getFullYear()} Clinexus</span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--signal-emerald))]" />
+            All systems operational · Lagos/WAT
+          </span>
         </div>
       </div>
     </footer>
