@@ -7,7 +7,7 @@ const columns = [
     { label: "Eye clinics", to: "/industries/eye-clinics" },
     { label: "Dental clinics", to: "/industries/dental-clinics" },
     { label: "Dental clinic pricing", to: "/industries/dental-clinics/pricing" },
-    { label: "How a case works", to: "/industries/dental-clinics/cases-explained" },
+    { label: "How a case works", to: "/industries/dental-clinics/how-cases-work" },
   ]},
   { title: "Resources", links: [
     { label: "Tutorials", to: "/tutorials" },

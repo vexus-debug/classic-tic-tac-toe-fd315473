@@ -76,6 +76,8 @@ const isDark = (pathname: string) =>
 "/terms",
 "/industries/eye-clinics",
 "/industries/eye-clinics/features",
+"/industries/dental-clinics/features",
+"/industries/dental-clinics/how-cases-work",
   ].includes(pathname);
 
 const Navbar = () => {
