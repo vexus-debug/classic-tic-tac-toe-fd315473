@@ -1,11 +1,12 @@
-import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
 import Layout from "@/site/components/Layout";
+import { ClinicalHero } from "@/site/components/heroes";
 import heroClinic from "@/assets/site/hero-clinic.jpg";
-import heroDental from "@/assets/site/hero-dental.jpg";
-import heroEye from "@/assets/site/hero-eye.jpg";
-import { InkHero, inkBtn, ghostBtn } from "@/site/components/overhaul/InkHero";
-import { Odontogram, RefractionDial } from "@/site/components/overhaul/ClinicalPreviews";
+import hubShotAsset from "@/assets/current-dashboard/dental-dashboard.png.asset.json";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 type Specialty = {
   code: string;
@@ -13,7 +14,86 @@ type Specialty = {
   group: "Outpatient" | "Diagnostic" | "Surgical";
   summary: string;
   pills: string[];
+  href?: string;
 };
+
+const flagships = [
+  {
+    code: "SPEC-01",
+    module: "MODULE: DENTAL",
+    title: "Dental Clinics",
+    summary:
+      "Charting, multi-visit billing and recall automation built around how a busy chair actually runs.",
+    pills: ["Perio & tooth charting", "Multi-visit billing", "X-ray / imaging vault", "Recall automation"],
+    href: "/industries/dental-clinics",
+    preview: (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+          <span>Tooth chart</span>
+          <span className="tabular-nums">32 / 32</span>
+        </div>
+        <div className="grid grid-cols-8 gap-1.5">
+          {Array.from({ length: 16 }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-7 rounded-[4px] border ${
+                [3, 9, 12].includes(i)
+                  ? "border-primary/40 bg-primary/25"
+                  : [5].includes(i)
+                    ? "border-destructive/40 bg-destructive/20"
+                    : "border-border/70 bg-muted/50"
+              }`}
+            />
+          ))}
+        </div>
+        <div className="flex gap-2 text-[11px] text-muted-foreground">
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">Treated</span>
+          <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-destructive">Caries</span>
+          <span className="rounded-full bg-muted px-2 py-0.5">Healthy</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    code: "SPEC-02",
+    module: "MODULE: OPTOMETRY",
+    title: "Eye Care & Optometry",
+    summary:
+      "Refraction records, lens and frame stock, and referral loops kept in one continuous patient file.",
+    pills: ["Refraction & acuity", "Lens & frame stock", "OCT / retinal scans", "Reorder cycles"],
+    href: "/industries/eye-clinics",
+    preview: (
+      <div className="space-y-3">
+        <div className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+          Prescription
+        </div>
+        <div className="overflow-hidden rounded-lg border border-border/70">
+          <div className="grid grid-cols-4 bg-muted/60 px-3 py-1.5 text-[11px] font-medium text-muted-foreground">
+            <span>Eye</span>
+            <span>SPH</span>
+            <span>CYL</span>
+            <span>AXIS</span>
+          </div>
+          {[
+            ["OD", "-2.25", "-0.75", "180"],
+            ["OS", "-1.75", "-0.50", "175"],
+          ].map((row) => (
+            <div
+              key={row[0]}
+              className="grid grid-cols-4 border-t border-border/60 px-3 py-2 text-sm tabular-nums text-foreground"
+            >
+              <span className="font-medium text-primary">{row[0]}</span>
+              <span>{row[1]}</span>
+              <span>{row[2]}</span>
+              <span>{row[3]}</span>
+            </div>
+          ))}
+        </div>
+        <div className="text-[11px] text-muted-foreground">Next review in 11 months · reminder queued</div>
+      </div>
+    ),
+  },
+];
 
 const specialties: Specialty[] = [
   {
@@ -79,180 +159,194 @@ const specialties: Specialty[] = [
     summary: "Custom modalities, package billing and retention campaigns for non-standard care.",
     pills: ["Custom modalities", "Package billing", "Retention"],
   },
+];
 
-const ledger = {
-  shared: {
-    label: "Shared Core",
-    head: "Shared platform",
-    rows: ["Staff roles and permissions", "Naira billing with split payments", "Patient records", "Audit log of every change", "Keeps working offline, syncs later"],
-  },
-  dental: {
-    label: "Dental",
-    head: "Dental module",
-    rows: ["FDI / Universal tooth chart", "6-point perio probing", "Lab work slips", "30-day case cycle billing", "X-ray and image vault"],
-  },
-  eye: {
-    label: "Eye Care",
-    head: "Eye module",
-    rows: ["Refraction Rx calculator", "Slit lamp notes", "Frame and lens stock", "Dispensing slips", "Contact lens fittings"],
-  },
-} as const;
-type Col = keyof typeof ledger;
-const cols: Col[] = ["shared", "dental", "eye"];
+const filters = ["All", "Outpatient", "Diagnostic", "Surgical"] as const;
 
-function ComparisonLedger() {
-  const [col, setCol] = useState<Col>("shared");
-  const touchX = useRef<number | null>(null);
-  const onEnd = (x: number) => {
-    if (touchX.current === null) return;
-    const d = x - touchX.current;
-    const i = cols.indexOf(col);
-    if (Math.abs(d) > 40) setCol(cols[Math.max(0, Math.min(2, i + (d < 0 ? 1 : -1)))]);
-    touchX.current = null;
-  };
-  return (
-    <section className="py-20 md:py-28">
-      <div className="container">
-        <h2 className="max-w-2xl text-3xl text-foreground md:text-4xl">One platform underneath. Two specialist modules on top.</h2>
-        <p className="mt-4 max-w-xl text-lg text-muted-foreground">Every clinic gets the shared core. Dental and eye clinics add the tools their chairs and exam rooms need.</p>
+const Industries = () => {
+  const [active, setActive] = useState<(typeof filters)[number]>("All");
 
-        {/* Mobile segmented switch */}
-        <div className="mt-10 grid grid-cols-3 rounded-full border border-border p-1 md:hidden" role="tablist">
-          {cols.map((c) => (
-            <button key={c} role="tab" aria-selected={col === c} onClick={() => setCol(c)}
-              className={`h-11 rounded-full text-sm font-medium transition-colors ${col === c ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
-              {ledger[c].label}
-            </button>
-          ))}
-        </div>
-        <div className="mt-6 md:hidden" onTouchStart={(e) => (touchX.current = e.touches[0].clientX)} onTouchEnd={(e) => onEnd(e.changedTouches[0].clientX)}>
-          <p className="border-b border-foreground pb-3 font-mono text-xs text-muted-foreground">{ledger[col].head}</p>
-          <ul className="divide-y divide-border">
-            {ledger[col].rows.map((r, i) => (
-              <li key={r} className="flex gap-4 py-4 text-base text-foreground"><span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>{r}</li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Desktop table */}
-        <table className="mt-14 hidden w-full border-collapse text-left md:table">
-          <thead>
-            <tr>
-              {cols.map((c) => (
-                <th key={c} className={`border-b border-foreground pb-3 font-mono text-xs font-normal ${c === "shared" ? "text-foreground" : "text-muted-foreground"}`}>{ledger[c].head}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {ledger.shared.rows.map((_, i) => (
-              <tr key={i} className="border-b border-border">
-                {cols.map((c) => (
-                  <td key={c} className="py-4 pr-6 align-top text-base text-foreground">{ledger[c].rows[i]}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+  const visible = useMemo(
+    () => (active === "All" ? specialties : specialties.filter((s) => s.group === active)),
+    [active],
   );
-}
 
-function Directory() {
-  const [open, setOpen] = useState<string | null>(null);
   return (
-    <section className="site-canvas-2 border-t border-border py-20 md:py-28">
-      <div className="container grid gap-12 lg:grid-cols-12">
-        <div className="lg:col-span-4">
-          <h2 className="text-3xl text-foreground md:text-4xl">Other specialties</h2>
-          <p className="mt-4 text-lg text-muted-foreground">These run on the shared core today. Tap one to see how it fits.</p>
-          <Link to="/contact" className="mt-8 inline-block text-sm font-semibold text-primary hover:underline">Ask about your specialty →</Link>
+    <Layout>
+      <ClinicalHero
+        kicker="Industries we serve"
+        title="Built for your kind of clinic."
+        description="We know every specialty is different. That's why Clinexus adapts to your workflows, not the other way around. Find your practice below."
+        photo={{ src: heroClinic, alt: "Receptionist welcoming a patient at a modern clinic front desk" }}
+        card={{ src: hubShotAsset.url, alt: "Clinexus clinic dashboard", caption: "One workspace for patients, billing, stock and staff" }}
+        primary={{ label: "Get Started", href: "https://wa.me/2349017758165?text=Hello%20I%20would%20like%20to%20know%20more%20about%20Clinexus", external: true }}
+        points={[
+          { value: "11+", label: "Specialties supported out of the box" },
+          { value: "24 hrs", label: "From signup to a live clinic workspace" },
+          { value: "1", label: "System for patients, billing, stock and staff" },
+        ]}
+      />
+
+      {/* Flagship specialties */}
+      <section className="border-b border-border/60 bg-background py-20">
+        <div className="container">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+                Deep-built verticals
+              </p>
+              <h2 className="mt-2 text-foreground">Two specialties, fully tooled</h2>
+            </div>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              Dedicated modules, not relabelled forms — charting, stock and billing shaped per specialty.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {flagships.map((f, i) => (
+              <motion.article
+                key={f.code}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+                className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/40"
+              >
+                <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <span>{f.code}</span>
+                  <span className="text-primary">{f.module}</span>
+                </div>
+
+                <h3 className="mt-4 text-foreground">{f.title}</h3>
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">{f.summary}</p>
+
+                <div className="mt-6 rounded-xl border border-border/70 bg-background/60 p-4">{f.preview}</div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {f.pills.map((p) => (
+                    <span
+                      key={p}
+                      className="rounded-full border border-border/70 px-3 py-1 text-xs text-muted-foreground"
+                    >
+                      {p}
+                    </span>
+                  ))}
+                </div>
+
+                <Link
+                  to={f.href}
+                  className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary"
+                >
+                  Explore {f.title.split(" ")[0]}
+                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </Link>
+              </motion.article>
+            ))}
+          </div>
         </div>
-        <ul className="border-t border-foreground lg:col-span-8">
-          {specialties.map((s) => {
-            const isOpen = open === s.code;
-            return (
-              <li key={s.code} className="border-b border-border">
-                <button onClick={() => setOpen(isOpen ? null : s.code)} onMouseEnter={() => setOpen(s.code)} aria-expanded={isOpen}
-                  className="grid min-h-[56px] w-full grid-cols-[72px_1fr_auto] items-center gap-4 py-4 text-left">
-                  <span className="font-mono text-xs text-muted-foreground">{s.code}</span>
-                  <span className={`text-lg transition-colors ${isOpen ? "text-primary" : "text-foreground"}`}>{s.title}</span>
-                  <span className="font-mono text-xs text-muted-foreground">{s.group}</span>
+      </section>
+
+      {/* All specialties */}
+      <section className="bg-background py-20">
+        <div className="container">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+                Every other practice
+              </p>
+              <h2 className="mt-2 text-foreground">Nine more specialties, same core</h2>
+            </div>
+
+            <div className="inline-flex rounded-full border border-border bg-card p-1">
+              {filters.map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setActive(f)}
+                  className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
+                    active === f
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {f}
                 </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-                  <div className="overflow-hidden">
-                    <div className="pb-5 pl-[88px] pr-4">
-                      <p className="text-base text-muted-foreground">{s.summary}</p>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-[11px] text-foreground">Shared core</span>
-                        {s.pills.map((p) => <span key={p} className="font-mono text-[11px] text-muted-foreground">· {p}</span>)}
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {visible.map((s, i) => (
+              <motion.article
+                key={s.code}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: (i % 3) * 0.08 }}
+                className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/40"
+              >
+                <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <span>{s.code}</span>
+                  <span className="text-primary">MODULE: {s.group}</span>
+                </div>
+
+                <h3 className="mt-4 text-foreground">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.summary}</p>
+
+                <div className="mt-6 flex-1 rounded-xl border border-border/70 bg-background/60 p-4">
+                  <div className="mb-3 flex items-center justify-between text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                    <span>Specialty workflow</span>
+                    <span className="text-primary">Included</span>
+                  </div>
+                  <div className="space-y-2">
+                    {s.pills.map((p, index) => (
+                      <div
+                        key={p}
+                        className="flex items-center gap-3 rounded-lg border border-border/60 bg-card px-3 py-2"
+                      >
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold tabular-nums text-primary">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span className="text-xs font-medium text-foreground">{p}</span>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </section>
-  );
-}
 
-function Portal({ to, title, lead, tags, image, children, reverse }: { to: string; title: string; lead: string; tags: string[]; image: string; children: React.ReactNode; reverse?: boolean }) {
-  return (
-    <article className={`site-ink group relative grid overflow-hidden rounded-md border border-border lg:grid-cols-2 ${reverse ? "lg:[&>*:first-child]:order-2" : ""}`}>
-      <div className="relative p-8 md:p-12">
-        <img src={image} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-[0.12]" />
-        <div className="relative">
-          <h3 className="text-3xl text-foreground md:text-4xl">{title}</h3>
-          <p className="mt-4 max-w-md text-lg text-muted-foreground">{lead}</p>
-          <ul className="mt-8 flex flex-wrap gap-2">
-            {tags.map((t) => <li key={t} className="rounded-full border border-border px-3 py-1 font-mono text-xs text-foreground">{t}</li>)}
-          </ul>
-          <Link to={to} className={`${inkBtn} mt-10`}>Explore {title.toLowerCase()} →</Link>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {s.pills.map((p) => (
+                    <span
+                      key={p}
+                      className="rounded-full border border-border/70 px-3 py-1 text-xs text-muted-foreground"
+                    >
+                      {p}
+                    </span>
+                  ))}
+                </div>
+              </motion.article>
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="border-t border-border bg-card p-8 md:p-12 lg:border-l lg:border-t-0">
-        <p className="mb-6 font-mono text-xs text-muted-foreground">Live preview · try it</p>
-        {children}
-      </div>
-    </article>
+      </section>
+
+      {/* CTA */}
+      <section className="relative overflow-hidden bg-[hsl(var(--medical-blue-dark))] py-20">
+        <div className="container relative z-10 text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="mb-4 text-3xl font-bold text-white">Don't see your specialty?</h2>
+            <p className="mx-auto mb-8 max-w-xl text-white/60">
+              Clinexus is flexible enough to support virtually any healthcare practice. Reach out and we'll
+              show you exactly how it fits.
+            </p>
+            <Link to="/contact">
+              <Button size="lg" className="gap-2 rounded-md bg-primary px-10 text-white shadow-lg hover:opacity-90">
+                Contact Us <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+    </Layout>
   );
-}
-
-const Industries = () => (
-  <Layout>
-    <InkHero
-      parallax
-      image={heroClinic}
-      kicker="Industries"
-      title={<>Software that works the way your specialty works.</>}
-      lead="Clinexus is built deep for dental and eye clinics, with tooth charts, refraction and case billing designed with Nigerian practices. Everything else sits on the same shared core."
-      actions={<>
-        <Link to="/industries/dental-clinics" className={inkBtn}>Dental clinics</Link>
-        <Link to="/industries/eye-clinics" className={ghostBtn}>Eye clinics</Link>
-      </>}
-    />
-
-    <section className="py-20 md:py-28">
-      <div className="container space-y-6">
-        <Portal to="/industries/dental-clinics" title="Dental clinics" image={heroDental}
-          lead="Tooth charting, perio probing and per-case billing built around how a busy chair actually runs."
-          tags={["Perio charting", "30-day case billing", "X-ray vault"]}>
-          <Odontogram />
-        </Portal>
-        <Portal reverse to="/industries/eye-clinics" title="Eye clinics" image={heroEye}
-          lead="Refraction, prescriptions and the optical shop in one record, from exam room to collected glasses."
-          tags={["Refraction Rx", "Lens dispensing", "Frame stock"]}>
-          <RefractionDial />
-        </Portal>
-      </div>
-    </section>
-
-    <ComparisonLedger />
-    <Directory />
-  </Layout>
-);
+};
 
 export default Industries;
